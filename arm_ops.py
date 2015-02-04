@@ -1,3 +1,9 @@
+# ARM Opcode Assemble for IDA Plugin
+# Author : Khiemnnm
+# Last update : 04/Feb/2015
+# History log
+# + 04/Feb/2015 : First version
+#
 import idaapi
 import idautils
 import idc
@@ -14,15 +20,7 @@ class myplugin_t(idaapi.plugin_t):
         return idaapi.PLUGIN_OK
 
     def run(self, arg):
-    	curEA = idc.ScreenEA()
-    	isCont = 1
-    	while isCont:
-	    	str = AskStr("","Address :"+hex(curEA)+"\nInstruction")
-	        if str:
-	        	arm(curEA,str)
-	        	curEA = curEA + 4
-	        else:
-	        	isCont = 0
+    	startarm()
 
     def term(self):
         pass
