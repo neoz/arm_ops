@@ -1,6 +1,6 @@
 #ARM Opcode Assemble for IDA Plugin
-Author : Computer Angel
-Last update : 04/Feb/2015
++ Author : Computer Angel
++ Last update : 04/Feb/2015
 
 #Usage:
 + Copy to ida plugin folder
