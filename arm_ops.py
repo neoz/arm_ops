@@ -1,9 +1,3 @@
-# ARM Opcode Assemble for IDA Plugin
-# Author : Khiemnnm
-# Last update : 04/Feb/2015
-# History log
-# + 04/Feb/2015 : First version
-#
 import idaapi
 import idautils
 import idc
