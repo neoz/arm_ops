@@ -9,27 +9,48 @@ import idautils
 import idc
 import sys
 
+def get_arch():
+	(arch, bits) = (None, None)
+	for x in idaapi.ph_get_regnames():
+		name = x
+		if name == 'RAX':
+			arch = 'amd64'
+			bits = 64
+			break
+		elif name == 'EAX':
+			arch = 'x86'
+			bits = 32
+			break
+		elif name == 'R0':
+			arch = 'arm'
+			bits = 32
+			break
+	return (arch, bits)
+
 class myplugin_t(idaapi.plugin_t):
-    flags = idaapi.PLUGIN_UNL
-    comment = "Arm Opcode Assembler helper"
-    help = "This is help"
-    wanted_name = "ARM Opcode Assembler"
-    wanted_hotkey = "Alt-A"
+	flags = idaapi.PLUGIN_UNL
+	comment = "Arm Opcode Assembler helper"
+	help = "This is help"
+	wanted_name = "ARM Opcode Assembler"
+	wanted_hotkey = "Alt-N"
+	(arch, bits) = (None,None)
 
-    def init(self):
-        return idaapi.PLUGIN_OK
+	def init(self):
+		(self.arch, self.bits) = get_arch()
+		return idaapi.PLUGIN_OK
 
-    def run(self, arg):
-    	startarm()
+	def run(self, arg):
+		if self.arch == 'arm':
+			startarm()
 
-    def term(self):
-        pass
+	def term(self):
+		pass
 
 def PLUGIN_ENTRY():
-    return myplugin_t()
+	return myplugin_t()
 
 def tohex(val, nbits):
-  return hex((val + (1 << nbits)) % (1 << nbits))
+	return hex((val + (1 << nbits)) % (1 << nbits))
 
 def remove_doublespace(str):
 	pos = str.find("  ")
@@ -485,7 +506,12 @@ def startarm():
 	curEA = idc.ScreenEA()
 	isCont = 1
 	while isCont:
-		str = AskStr("","Address :"+hex(curEA)+"\nInstruction")
+		t = idaapi.generate_disasm_line(curEA)
+		if t:
+			line = idaapi.tag_remove(t)
+		else:
+			line = ""
+		str = AskStr(line,"Address :"+hex(curEA)+"\nInstruction")
 		if str:
 			arm(curEA,str)
 			curEA = curEA + 4
