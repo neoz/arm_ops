@@ -13,5 +13,5 @@
 #History log
 + 04/Feb/2015 : First version
 + 06/Feb/2015 :
-	_ Try catch exception for wrong instruction
-	_ Support all data processing instruction opcodes and condition
+	- Try catch exception for wrong instruction
+	- Support all data processing instruction opcodes and condition
