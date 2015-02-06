@@ -3,6 +3,22 @@ import idautils
 import idc
 import sys
 
+class Error(Exception):
+    """Base class for exceptions in this module."""
+    pass
+
+class InputError(Error):
+    """Exception raised for errors in the input.
+
+    Attributes:
+        expr -- input expression in which the error occurred
+        msg  -- explanation of the error
+    """
+
+    def __init__(self, expr, msg):
+        self.expr = expr
+        self.msg = msg
+
 def get_arch():
 	(arch, bits) = (None, None)
 	for x in idaapi.ph_get_regnames():
@@ -87,7 +103,7 @@ def read_number(str):
 			num = 0
 
 	if err_flag == 1:
-		raise ValueError("Error: Could not read number in"+str)
+		raise InputError(str,"Error: Could not read number"+str)
 
 	return num
 
@@ -184,9 +200,11 @@ def bandbl_opcode(startea, part):
 	PatchDword(startea, ins_value)
 
 def dataprocessing_opcode(startea, part):
-	if part[0] == "and":
+	if part[0].startswith("and"):
 		args = get_args(part[1])
-		cond =  '1110'
+		cond_str = remove_prefix("and",part[0])
+		cond = get_cond_bit(cond_str)
+		#cond =  '1110'
 		opcode = '0000'
 		imm_operand = '0'
 		setcondcode = '0'
@@ -202,11 +220,31 @@ def dataprocessing_opcode(startea, part):
 		else:	
 			imm_operand = '0'
 			operand2 = '00000000' + get_Rn_bit(args[2])
-	elif part[0] == "eor":
-		raise ValueError("Error: Not implement "+str)
-	elif part[0] == "sub":
+	elif part[0].startswith("eor"):
 		args = get_args(part[1])
-		cond =  '1110'
+		cond_str = remove_prefix("eor",part[0])
+		cond = get_cond_bit(cond_str)
+		#cond =  '1110'
+		opcode = '0001'
+		imm_operand = '0'
+		setcondcode = '0'
+		Rn = get_Rn_bit(args[1])
+		Rd = get_Rn_bit(args[0])
+		operand2 = '000000000000'
+		if args[2].startswith("#"):
+			imm_operand = '1'
+			imm_str = remove_prefix("#",args[2])
+			imm_value = read_number(imm_str)
+			imm_value = imm_value & 0xFF
+			operand2 = '0000' + format(imm_value,'b').zfill(8)
+		else:	
+			imm_operand = '0'
+			operand2 = '00000000' + get_Rn_bit(args[2])
+	elif part[0].startswith("sub"):
+		args = get_args(part[1])
+		cond_str = remove_prefix("sub",part[0])
+		cond = get_cond_bit(cond_str)
+		#cond =  '1110'
 		opcode = '0010'
 		imm_operand = '0'
 		setcondcode = '0'
@@ -222,11 +260,31 @@ def dataprocessing_opcode(startea, part):
 		else:	
 			imm_operand = '0'
 			operand2 = '00000000' + get_Rn_bit(args[2])
-	elif part[0] == "rsb":
-		raise ValueError("Error: Not implement "+str)
-	elif part[0] == "add":
+	elif part[0].startswith("rsb"):
 		args = get_args(part[1])
-		cond =  '1110'
+		cond_str = remove_prefix("rsb",part[0])
+		cond = get_cond_bit(cond_str)
+		#cond =  '1110'
+		opcode = '0011'
+		imm_operand = '0'
+		setcondcode = '0'
+		Rn = get_Rn_bit(args[1])
+		Rd = get_Rn_bit(args[0])
+		operand2 = '000000000000'
+		if args[2].startswith("#"):
+			imm_operand = '1'
+			imm_str = remove_prefix("#",args[2])
+			imm_value = read_number(imm_str)
+			imm_value = imm_value & 0xFF
+			operand2 = '0000' + format(imm_value,'b').zfill(8)
+		else:	
+			imm_operand = '0'
+			operand2 = '00000000' + get_Rn_bit(args[2])
+	elif part[0].startswith("add"):
+		args = get_args(part[1])
+		cond_str = remove_prefix("add",part[0])
+		cond = get_cond_bit(cond_str)
+		#cond =  '1110'
 		opcode = '0100'
 		imm_operand = '0'
 		setcondcode = '0'
@@ -242,15 +300,71 @@ def dataprocessing_opcode(startea, part):
 		else:	
 			imm_operand = '0'
 			operand2 = '00000000' + get_Rn_bit(args[2])
-	elif part[0] == "adc":
-		raise ValueError("Error: Not implement "+str)
-	elif part[0] == "sbc":
-		raise ValueError("Error: Not implement "+str)
-	elif part[0] == "rsc":
-		raise ValueError("Error: Not implement "+str)
-	elif part[0] == "tst":
+	elif part[0].startswith("adc"):
 		args = get_args(part[1])
-		cond =  '1110'
+		cond_str = remove_prefix("adc",part[0])
+		cond = get_cond_bit(cond_str)
+		#cond =  '1110'
+		opcode = '0101'
+		imm_operand = '0'
+		setcondcode = '0'
+		Rn = get_Rn_bit(args[1])
+		Rd = get_Rn_bit(args[0])
+		operand2 = '000000000000'
+		if args[2].startswith("#"):
+			imm_operand = '1'
+			imm_str = remove_prefix("#",args[2])
+			imm_value = read_number(imm_str)
+			imm_value = imm_value & 0xFF
+			operand2 = '0000' + format(imm_value,'b').zfill(8)
+		else:	
+			imm_operand = '0'
+			operand2 = '00000000' + get_Rn_bit(args[2])
+	elif part[0].startswith("sbc"):
+		args = get_args(part[1])
+		cond_str = remove_prefix("sbc",part[0])
+		cond = get_cond_bit(cond_str)
+		#cond =  '1110'
+		opcode = '0110'
+		imm_operand = '0'
+		setcondcode = '0'
+		Rn = get_Rn_bit(args[1])
+		Rd = get_Rn_bit(args[0])
+		operand2 = '000000000000'
+		if args[2].startswith("#"):
+			imm_operand = '1'
+			imm_str = remove_prefix("#",args[2])
+			imm_value = read_number(imm_str)
+			imm_value = imm_value & 0xFF
+			operand2 = '0000' + format(imm_value,'b').zfill(8)
+		else:	
+			imm_operand = '0'
+			operand2 = '00000000' + get_Rn_bit(args[2])
+	elif part[0].startswith("rsc"):
+		args = get_args(part[1])
+		cond_str = remove_prefix("rsc",part[0])
+		cond = get_cond_bit(cond_str)
+		#cond =  '1110'
+		opcode = '0111'
+		imm_operand = '0'
+		setcondcode = '0'
+		Rn = get_Rn_bit(args[1])
+		Rd = get_Rn_bit(args[0])
+		operand2 = '000000000000'
+		if args[2].startswith("#"):
+			imm_operand = '1'
+			imm_str = remove_prefix("#",args[2])
+			imm_value = read_number(imm_str)
+			imm_value = imm_value & 0xFF
+			operand2 = '0000' + format(imm_value,'b').zfill(8)
+		else:	
+			imm_operand = '0'
+			operand2 = '00000000' + get_Rn_bit(args[2])
+	elif part[0].startswith("tst"):
+		args = get_args(part[1])
+		cond_str = remove_prefix("tst",part[0])
+		cond = get_cond_bit(cond_str)
+		#cond =  '1110'
 		opcode = '1000'
 		imm_operand = '0'
 		setcondcode = '1'
@@ -266,9 +380,11 @@ def dataprocessing_opcode(startea, part):
 		else:	
 			imm_operand = '0'
 			operand2 = '00000000' + get_Rn_bit(args[1])
-	elif part[0] == "teq":
+	elif part[0].startswith("teq"):
 		args = get_args(part[1])
-		cond =  '1110'
+		#cond =  '1110'
+		cond_str = remove_prefix("teq",part[0])
+		cond = get_cond_bit(cond_str)
 		opcode = '1001'
 		imm_operand = '0'
 		setcondcode = '1'
@@ -284,9 +400,11 @@ def dataprocessing_opcode(startea, part):
 		else:	
 			imm_operand = '0'
 			operand2 = '00000000' + get_Rn_bit(args[1])
-	elif part[0] == "cmp":
+	elif part[0].startswith("cmp"):
 		args = get_args(part[1])
-		cond =  '1110'
+		#cond =  '1110'
+		cond_str = remove_prefix("cmp",part[0])
+		cond = get_cond_bit(cond_str)
 		opcode = '1010'
 		imm_operand = '0'
 		setcondcode = '1'
@@ -302,9 +420,11 @@ def dataprocessing_opcode(startea, part):
 		else:	
 			imm_operand = '0'
 			operand2 = '00000000' + get_Rn_bit(args[1])
-	elif part[0] == "cmn":
+	elif part[0].startswith("cmn"):
 		args = get_args(part[1])
-		cond =  '1110'
+		cond_str = remove_prefix("cmn",part[0])
+		cond = get_cond_bit(cond_str)
+		#cond =  '1110'
 		opcode = '1011'
 		imm_operand = '0'
 		setcondcode = '1'
@@ -320,11 +440,31 @@ def dataprocessing_opcode(startea, part):
 		else:	
 			imm_operand = '0'
 			operand2 = '00000000' + get_Rn_bit(args[1])
-	elif part[0] == "orr":
-		raise ValueError("Error: Not implement "+str)
-	elif part[0] == "mov":
+	elif part[0].startswith("orr"):
 		args = get_args(part[1])
-		cond =  '1110'
+		cond_str = remove_prefix("orr",part[0])
+		cond = get_cond_bit(cond_str)
+		#cond =  '1110'
+		opcode = '1100'
+		imm_operand = '0'
+		setcondcode = '0'
+		Rn = get_Rn_bit(args[1])
+		Rd = get_Rn_bit(args[0])
+		operand2 = '000000000000'
+		if args[2].startswith("#"):
+			imm_operand = '1'
+			imm_str = remove_prefix("#",args[2])
+			imm_value = read_number(imm_str)
+			imm_value = imm_value & 0xFF
+			operand2 = '0000' + format(imm_value,'b').zfill(8)
+		else:	
+			imm_operand = '0'
+			operand2 = '00000000' + get_Rn_bit(args[2])
+	elif part[0].startswith("mov"):
+		args = get_args(part[1])
+		cond_str = remove_prefix("mov",part[0])
+		cond = get_cond_bit(cond_str)
+		#cond =  '1110'
 		opcode = '1101'
 		imm_operand = '0'
 		setcondcode = '0'
@@ -340,9 +480,11 @@ def dataprocessing_opcode(startea, part):
 		else:	
 			imm_operand = '0'
 			operand2 = '00000000' + get_Rn_bit(args[1])
-	elif part[0] == "bic":
+	elif part[0].startswith("bic"):
 		args = get_args(part[1])
-		cond =  '1110'
+		#cond =  '1110'
+		cond_str = remove_prefix("bic",part[0])
+		cond = get_cond_bit(cond_str)
 		opcode = '1110'
 		imm_operand = '0'
 		setcondcode = '0'
@@ -358,9 +500,11 @@ def dataprocessing_opcode(startea, part):
 		else:	
 			imm_operand = '0'
 			operand2 = '00000000' + get_Rn_bit(args[2])
-	elif part[0] == "mvn":
+	elif part[0].startswith("mvn"):
 		args = get_args(part[1])
-		cond =  '1110'
+		#cond =  '1110'
+		cond_str = remove_prefix("mvn",part[0])
+		cond = get_cond_bit(cond_str)
 		opcode = '1111'
 		imm_operand = '0'
 		setcondcode = '0'
@@ -487,7 +631,8 @@ def arm(startea,instruction_string):
 	for i in range(0,len(part)):
 		part[i] = clean_part(part[i])
 
-	if part[0] in ('and','eor','sub','rsb','add','adc','sbc','rsc','tst','teq','cmp','cmn','orr','mov','bic','movn'):
+
+	if part[0].startswith(('and','eor','sub','rsb','add','adc','sbc','rsc','tst','teq','cmp','cmn','orr','mov','bic','mvn')):
 		dataprocessing_opcode(startea,part)
 	elif part[0].startswith("bx"):
 		bx_opcode(startea,part)
@@ -495,6 +640,8 @@ def arm(startea,instruction_string):
 		bandbl_opcode(startea,part)
 	elif part[0] in ('ldr','str','ldrb','strb'):
 		singledatatransfer_opcode(startea,part)
+	else:
+		raise InputError(str,"Invalid instruction "+instruction_string)
 
 def startarm():
 	curEA = idc.ScreenEA()
@@ -507,7 +654,10 @@ def startarm():
 			line = ""
 		str = AskStr(line,"Address :"+hex(curEA)+"\nInstruction")
 		if str:
-			arm(curEA,str)
-			curEA = curEA + 4
+			try:
+				arm(curEA,str)
+				curEA = curEA + 4
+			except InputError as e:
+				print e.msg
 		else:
 			isCont = 0
