@@ -10,6 +10,9 @@
 + Support more ARM opcode
 + Support Thumb ARM opcode
 
++ Credits :
+	- Special thanks to sipefree on his arm lexer and parser https://github.com/sipefree/d00ks
+
 #History log
 + 04/Feb/2015 : First version
 + 06/Feb/2015 :

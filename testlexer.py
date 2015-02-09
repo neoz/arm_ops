@@ -1,0 +1,3 @@
+import lexer
+
+lexer.test()

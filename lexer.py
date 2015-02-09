@@ -16,7 +16,6 @@
 ##########################################################################
 
 
-
 import ply.lex as lex
 
 """
@@ -271,11 +270,12 @@ def toks():
 		if not tok: break
 		print tok
 
-while 1:
-	try:
-		s = raw_input('test > ')
-	except EOFError:
-		break
-	if not s: continue
-	lex.input(s)
-	toks()
+def test():
+	while 1:
+		try:
+			s = raw_input('test > ')
+		except EOFError:
+			break
+		if not s: continue
+		lex.input(s)
+		toks()
